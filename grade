@@ -1,0 +1,111 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define FILE_NAME "gradesCalculator"
+#define MAX_SUBJECTS 100
+#define MAX_NAME_LENGTH 50
+
+typedef struct {
+    char name[MAX_NAME_LENGTH];
+    float grade;
+} Subject;
+
+void saveSubjects(Subject subjects[], int count) {
+    FILE *file = fopen(FILE_NAME, "w");
+    if (!file) {
+        printf("Error saving data!\n");
+        return;
+    }
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "%s %.2f\n", subjects[i].name, subjects[i].grade);
+    }
+    fclose(file);
+}
+
+int loadSubjects(Subject subjects[], int *count) {
+    FILE *file = fopen(FILE_NAME, "r");
+    if (!file) return 0;
+    *count = 0;
+    while (fscanf(file, "%s %f", subjects[*count].name, &subjects[*count].grade) == 2) {
+        (*count)++;
+    }
+    fclose(file);
+    return 1;
+}
+
+void addSubject(Subject subjects[], int *count) {
+    if (*count >= MAX_SUBJECTS) {
+        printf("Subject limit reached!\n");
+        return;
+    }
+    printf("Enter subject name: ");
+    scanf("%s", subjects[*count].name);
+    printf("Enter grade: ");
+    scanf("%f", &subjects[*count].grade);
+    (*count)++;
+    saveSubjects(subjects, *count);
+}
+
+void viewSubjects(Subject subjects[], int count) {
+    if (count == 0) {
+        printf("No subjects recorded.\n");
+        return;
+    }
+    float sum = 0, highest = 0, lowest = 100;
+    printf("\nSubjects and Grades:\n");
+    for (int i = 0; i < count; i++) {
+        printf("%s: %.2f\n", subjects[i].name, subjects[i].grade);
+        sum += subjects[i].grade;
+        if (subjects[i].grade > highest) highest = subjects[i].grade;
+        if (subjects[i].grade < lowest) lowest = subjects[i].grade;
+    }
+    printf("Average: %.2f\n", sum / count);
+    printf("Highest: %.2f\n", highest);
+    printf("Lowest: %.2f\n", lowest);
+}
+
+void deleteSubject(Subject subjects[], int *count) {
+    if (*count == 0) {
+        printf("No subjects to delete.\n");
+        return;
+    }
+    char target[MAX_NAME_LENGTH];
+    printf("Enter subject name to delete: ");
+    scanf("%s", target);
+    int i, found = 0;
+    for (i = 0; i < *count; i++) {
+        if (strcmp(subjects[i].name, target) == 0) {
+            found = 1;
+            break;
+        }
+    }
+    if (found) {
+        for (; i < *count - 1; i++) {
+            subjects[i] = subjects[i + 1];
+        }
+        (*count)--;
+        saveSubjects(subjects, *count);
+        printf("Subject deleted successfully.\n");
+    } else {
+        printf("Subject not found.\n");
+    }
+}
+
+int main() {
+    Subject subjects[MAX_SUBJECTS];
+    int count = 0;
+    loadSubjects(subjects, &count);
+    int choice;
+    while (1) {
+        printf("\n1. Add Subject\n2. View Subjects\n3. Delete Subject\n4. Exit\nChoose an option: ");
+        scanf("%d", &choice);
+        switch (choice) {
+            case 1: addSubject(subjects, &count); break;
+            case 2: viewSubjects(subjects, count); break;
+            case 3: deleteSubject(subjects, &count); break;
+            case 4: return 0;
+            default: printf("Invalid option!\n");
+        }
+    }
+}
